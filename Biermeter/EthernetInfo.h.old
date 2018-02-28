@@ -1,0 +1,48 @@
+#ifndef EthernetInfo_h_
+#define EthernetInfo_h_
+
+#include <Ethernet.h>
+#include <math.h>
+#include <TimerOne.h>
+#include <Time.h>
+
+
+#if ARDUINO >= 100
+	#include "Arduino.h"
+#else
+	#include "WProgram.h"
+#endif
+
+class EthernetInfo {
+	public:
+	/**
+	 * Checks if the DHCP lease needs to be renewed, and if so, renews it.
+	 */
+	 void DHCPCheck();
+	/**
+	 * Connects to VB site and retrieves bierstanden.txt.
+	 * This function takes about 4.5 seconds to complete because of the waittimes.
+	 * Returns 1 on success, 0 on failure.
+	 */
+	 int connectToVB();
+	 
+	/**
+	 * Returns the amount of available bytes in the linebuffer
+	 */
+	int available();
+	
+	/**
+	 * Reads a character from the linebuffer
+	 */
+	char read();
+
+        EthernetInfo();
+	 
+	private:
+        int h, m,s,d;
+        time_t t;
+	byte _mac[];
+	byte _server[];
+	EthernetClient client;
+};
+#endif

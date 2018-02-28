@@ -1,0 +1,92 @@
+#include "EthernetInfo.h"
+
+byte mac[] = { 
+  0x90, 0xA2, 0xDA, 0x0D, 0x78, 0x62 };
+byte server[] = { 
+  130,89,149,242}; //vestingbar.nl
+//dhcp renewal info
+
+
+EthernetInfo::EthernetInfo(){
+
+  Serial.begin(9600);
+  
+  Serial.println("Got time, getting ip");
+  // get info for dhcp renewal
+  t = now();
+  h = hour(t);
+  m = minute(t);
+  s = second(t);
+  d = day(t);
+  delay(1000);
+  //Returns 1 on succesfull DHCP request, 0 on failure
+  while(Ethernet.begin(mac) == 0){
+    Serial.println("Failed to get IP, trying again");
+    // no point in carrying on, so do nothing forevermore:
+    delay(1000);
+  }
+}
+
+bool readPastHeader(Client *pClient){
+  bool bIsBlank = true;
+  while(true){
+    if (pClient->available()){
+      char c = pClient->read();
+      if(c=='\r' && bIsBlank){
+        // throw away the /n
+        c = pClient->read();
+        return true;
+      }
+      if(c=='\n')
+        bIsBlank = true;
+      else if(c!='\r')
+        bIsBlank = false;
+    }
+  }
+}
+
+void EthernetInfo::DHCPCheck(){
+  time_t n = now();
+  if((hour(n) - h) > 23){
+    byte i = Ethernet.maintain();
+    switch (i){
+    case 0:  
+      break;
+    case 1:
+      break;
+    case 2:
+      h = hour(n);
+      break;
+    case 3:
+      break;
+    case 4:
+      h = hour(n);
+      break;
+    default:
+      break;
+    }
+  }
+} 
+
+int EthernetInfo::connectToVB(){
+  client.stop(); 
+  delay(2000);
+  if(client.connect(server, 80)){
+    client.println("GET /docs/bierstanden.txt HTTP/1.0");
+    client.println();
+    delay(2000);
+    readPastHeader(&client);
+    return 1;
+  }
+  Serial.println("Connection failed");
+  return 0;
+}
+
+char EthernetInfo::read(){
+  return client.read(); 
+}
+
+int EthernetInfo::available(){
+  return client.available(); 
+}
+
